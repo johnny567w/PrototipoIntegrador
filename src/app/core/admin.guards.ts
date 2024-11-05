@@ -1,10 +1,8 @@
-// admin.guard.ts
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, take, tap } from 'rxjs/operators';
 import { AuthService } from '../services/data-acces/auth.service';
-import { User } from '@angular/fire/auth';
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -14,11 +12,12 @@ export class AdminGuard implements CanActivate {
 
   canActivate(): Observable<boolean> {
     return this.authService.getUserProfile().pipe(
-      take(1),
-      map((user: User | null) => user?.role === 'admin'),
-      tap(isAdmin => {
-        if (!isAdmin) {
-          this.router.navigate(['/']); // Redirigir a la página principal o a otra ruta
+      map(user => {
+        if (user?.role === 'admin') {
+          return true; // Acceso permitido para administradores
+        } else {
+          this.router.navigate(['/user-dashboard']); // Redirigir si no es administrador
+          return false;
         }
       })
     );

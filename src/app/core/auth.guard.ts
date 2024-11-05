@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router, UrlTree } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { CanActivate, Router } from '@angular/router';
 import { AuthService } from '../services/data-acces/auth.service';
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -10,25 +10,14 @@ import { AuthService } from '../services/data-acces/auth.service';
 export class AuthGuard implements CanActivate {
   constructor(private authService: AuthService, private router: Router) {}
 
-  canActivate(): Observable<boolean | UrlTree> {
+  canActivate(): Observable<boolean> {
     return this.authService.getUserProfile().pipe(
       map(user => {
         if (user) {
-          // Redirige según el rol del usuario
-          if (user.role === 'admin') {
-            this.router.navigate(['/admin-dashboard']);
-          } else {
-            this.router.navigate(['/user-dashboard']);
-          }
-          return true;
+          return true; // El usuario está autenticado
         } else {
-          // Redirige solo si no está autenticado y evita redirección infinita
-          return this.router.parseUrl('/auth/sign-in');
-        }
-      }),
-      tap(redirected => {
-        if (redirected instanceof UrlTree) {
-          this.router.navigateByUrl(redirected);
+          this.router.navigate(['/auth/sign-in']);
+          return false; // El usuario no está autenticado
         }
       })
     );

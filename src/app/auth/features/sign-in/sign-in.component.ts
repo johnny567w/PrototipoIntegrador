@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';  // Importa RouterModule
 import { AuthService, User } from '../../../services/data-acces/auth.service';
 import { toast } from 'ngx-sonner';
 import { GoogleComponent } from '../../Ui/google/google.component';
@@ -14,7 +15,7 @@ export interface FormSignIn {
 @Component({
   selector: 'app-sign-in',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, GoogleComponent],
+  imports: [ReactiveFormsModule, CommonModule, RouterModule, GoogleComponent],  // Añade RouterModule aquí
   templateUrl: './sign-in.component.html',
   styles: ``
 })
@@ -45,7 +46,6 @@ export default class SignInComponent {
       
       await this._authService.signIn({ email, password });
 
-      // Redirección directa según el rol del usuario
       this._authService.getUserProfile().subscribe((user: User | null) => {
         if (user?.role === 'admin') {
           window.location.href = '/admin-dashboard';
@@ -64,7 +64,6 @@ export default class SignInComponent {
     try {
       await this._authService.signInWithGoogle();
 
-      // Redirección directa según el rol del usuario
       this._authService.getUserProfile().subscribe((user: User | null) => {
         if (user?.role === 'admin') {
           window.location.href = '/admin-dashboard';
@@ -77,5 +76,9 @@ export default class SignInComponent {
     } catch (error) {
       toast.error('Ocurrió un error al iniciar sesión con Google');
     }
+  }
+
+  redirectToSignUp() {
+    window.location.href = '/auth/sign-up';
   }
 }
