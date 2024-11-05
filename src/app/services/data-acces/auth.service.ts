@@ -1,13 +1,16 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, UserCredential } from '@angular/fire/auth';
-import { Firestore, doc, setDoc } from '@angular/fire/firestore';
+import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, authState, User as FirebaseUser } from '@angular/fire/auth';
+import { Firestore, doc, setDoc, getDoc, docData } from '@angular/fire/firestore';
+import { Observable, of, Subject } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { UserCredential } from '@angular/fire/auth';
 
-// Definir la interfaz User en el servicio sin un modelo separado
 export interface User {
   email: string;
-  password: string;
-  name?: string;   // Campo opcional para el nombre
-  phone?: string;  // Campo opcional para el teléfono
+  password?: string;
+  name?: string;
+  phone?: string;
+  role?: string;
 }
 
 @Injectable({
@@ -17,29 +20,67 @@ export class AuthService {
   private _auth = inject(Auth);
   private _firestore = inject(Firestore);
 
-  // Método para registrar al usuario y guardar datos en Firestore
+  // Subject para emitir la ruta de redirección según el rol
+  private _redirectUrl = new Subject<string>();
+  redirectUrl$ = this._redirectUrl.asObservable();
+
   signUp(user: User) {
-    return createUserWithEmailAndPassword(this._auth, user.email, user.password).then(async (userCredential: UserCredential) => {
-      // Crear un documento en la colección 'users' con el UID del usuario como ID
+    return createUserWithEmailAndPassword(this._auth, user.email, user.password!).then(async (userCredential) => {
       const userDocRef = doc(this._firestore, `users/${userCredential.user.uid}`);
       await setDoc(userDocRef, {
         email: user.email,
-        name: user.name || '',    // Se asegura de que 'name' y 'phone' no sean null
+        name: user.name || '',
         phone: user.phone || '',
+        role: 'user',
         createdAt: new Date()
       });
     });
   }
 
-  // Método para iniciar sesión con email y contraseña
   signIn(user: User) {
-    return signInWithEmailAndPassword(this._auth, user.email, user.password);
+    return signInWithEmailAndPassword(this._auth, user.email, user.password!).then(async (userCredential) => {
+      const userDocRef = doc(this._firestore, `users/${userCredential.user.uid}`);
+      const userSnapshot = await getDoc(userDocRef);
+
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data() as User;
+        const redirectTo = userData.role === 'admin' ? '/admin-dashboard' : '/user-dashboard';
+        this._redirectUrl.next(redirectTo); // Emitir la ruta para el guard
+      }
+    });
   }
 
-  // Método para iniciar sesión con Google
-  signInWithGoogle() {
+  async signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    return signInWithPopup(this._auth, provider);
+    const userCredential: UserCredential = await signInWithPopup(this._auth, provider);
+    const userDocRef = doc(this._firestore, `users/${userCredential.user.uid}`);
+    const userSnapshot = await getDoc(userDocRef);
+
+    if (!userSnapshot.exists()) {
+      await setDoc(userDocRef, {
+        email: userCredential.user.email,
+        name: userCredential.user.displayName || '',
+        role: 'user',  // Rol predeterminado
+        createdAt: new Date()
+      });
+    }
+
+    const userData = (await getDoc(userDocRef)).data() as User;
+    const redirectTo = userData.role === 'admin' ? '/admin-dashboard' : '/user-dashboard';
+    this._redirectUrl.next(redirectTo);
+  }
+
+  getUserProfile(): Observable<User | null> {
+    return authState(this._auth).pipe(
+      switchMap((user: FirebaseUser | null) => {
+        if (user && user.uid) {
+          const userDocRef = doc(this._firestore, `users/${user.uid}`);
+          return docData(userDocRef) as Observable<User>;
+        } else {
+          return of(null);
+        }
+      })
+    );
   }
 }

@@ -1,30 +1,14 @@
 import { Routes } from '@angular/router';
-//import { privateGuard, publicGuard } from './core/auth.guard';
+import { UserDashboardComponent } from './user/user-dashboard/user-dashboard.component';
+import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 
 export const routes: Routes = [
+  { path: 'user-dashboard', component: UserDashboardComponent },
+  { path: 'admin-dashboard', component: AdminDashboardComponent },
   {
     path: 'auth',
-    loadChildren: () => import('./auth/features/auth.routes')
+    loadChildren: () => import('./auth/features/auth.routes').then(m => m.default),
   },
-  {
-    path: '**',
-    redirectTo: '/auth', // o la ruta que prefieras
-  },
+  { path: '', redirectTo: '/auth/sign-in', pathMatch: 'full' },
+  { path: '**', redirectTo: '/auth/sign-in' }
 ];
-
-  //{
-   // canActivateChild: [publicGuard()],
-    //path: 'auth',
-   // loadChildren: () => import('./auth/features/auth.routes'),
- // },
- //{
-//  canActivateChild: [privateGuard()],
-  
-  // path: 'tasks',
- //   loadComponent: () => import('./shared/ui/layout.component'),
-  //  loadChildren: () => import('./task/features/task.routes'),
- //},
-//  {
- //   path: '**',
-   //  redirectTo: '/tasks',
- // },
