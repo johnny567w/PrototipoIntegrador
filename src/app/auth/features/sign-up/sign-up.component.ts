@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/data-acces/auth.service';
 import { GoogleComponent } from '../../Ui/google/google.component';
 import { toast } from 'ngx-sonner';
+import { FooterComponent } from "../../../core/footer/footer.component";
 
 // Definición de la interfaz FormSignUp para el formulario de registro
 interface FormSignUp {
@@ -18,7 +19,7 @@ interface FormSignUp {
 @Component({
   selector: 'app-sign-up',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, RouterLink, GoogleComponent],
+  imports: [ReactiveFormsModule, CommonModule, RouterLink, GoogleComponent, FooterComponent],
   templateUrl: './sign-up.component.html',
 })
 export default class SignUpComponent {

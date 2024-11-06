@@ -6,6 +6,7 @@ import { AuthService, User } from '../../../services/data-acces/auth.service';
 import { toast } from 'ngx-sonner';
 import { GoogleComponent } from '../../Ui/google/google.component';
 import { hasEmailError } from '../../utils/validators';
+import { FooterComponent } from '../../../core/footer/footer.component';
 
 export interface FormSignIn {
   email: FormControl<string | null>;
@@ -15,7 +16,7 @@ export interface FormSignIn {
 @Component({
   selector: 'app-sign-in',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, RouterModule, GoogleComponent],  // Añade RouterModule aquí
+  imports: [ReactiveFormsModule, CommonModule, RouterModule, GoogleComponent,FooterComponent],  // Añade RouterModule aquí
   templateUrl: './sign-in.component.html',
   styles: ``
 })
